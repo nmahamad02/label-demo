@@ -1,0 +1,59 @@
+/* You can add global styles to this file, and also import other style files */
+@import "bootstrap/scss/bootstrap";
+
+$primary: #444444;
+$secondary: #181818bd;
+$warning: #C5F7C9;
+
+.bg-primary {
+
+  background-color: $primary !important;
+}
+
+.bg-secondary {
+
+  background-color: $secondary !important;
+}
+
+.text-warning {
+
+  color: $warning !important;
+}
+
+.border-warning {
+
+  border-color: $warning !important;
+}
+
+.offcanvas {
+
+  width: 450px !important;
+  padding: 0 1rem;
+}
+
+.text-bg-warning {
+
+  background-color: $warning !important;
+}
+
+body {
+
+  min-height: 100vh;
+  background-color: $primary;
+}
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+::ng-deep .mat-mdc-tab-group .mdc-tab {
+  font-size: 16px !important;
+  font-weight: bold !important;
+  color: white !important;
+  text-transform: none !important;
+}
+
+.mdc-tab {
+  font-size: 16px !important;
+  font-weight: bold !important;
+  color: white !important;
+  text-transform: none !important;
+}

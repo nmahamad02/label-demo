@@ -1,0 +1,135 @@
+<div class="container-fluid">
+    <div class="row no-gutters">
+        <div class="visualization-heading col-12">
+            <div class="heading-info">
+                <div class="col-12">                
+                    <h1 class="heading-title" style="align-content: center;">AWB Label Generator</h1>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <form [formGroup]="labelForm" class="form-container">
+                            <h3>Shipment Details</h3>
+                            <hr>
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-12">
+                                    <mat-label>Airline</mat-label>
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoAirline" formControlName="airline" required placeholder="Select Airline">
+                                    <mat-autocomplete #autoAirline="matAutocomplete">
+                                        <mat-option *ngFor="let option of filteredAirlines$ | async" [value]="option.name">
+                                            {{ option.name }} ({{ option.iata }})
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div>            
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-label>Origin</mat-label>
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoOrigin" formControlName="origin" required placeholder="Select Origin Airport">
+                                    <mat-autocomplete #autoOrigin="matAutocomplete">
+                                        <mat-option *ngFor="let option of filteredOrigins$ | async" [value]="option.iata">
+                                            {{ option.city }} - {{ option.name }} ({{ option.iata }})
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error> </mat-error>
+                                </div>   
+                                <div class="col-6" style="padding-top: 5px; padding-bottom: 5px;">
+                                    <mat-label>Destination</mat-label>
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoDestination" formControlName="destination" required placeholder="Select Destination Airport">
+                                    <mat-autocomplete #autoDestination="matAutocomplete">
+                                        <mat-option *ngFor="let option of filteredDestinations$ | async" [value]="option.iata">
+                                            {{ option.city }} - {{ option.name }} ({{ option.iata }})
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div>  
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-label>Pieces</mat-label>
+                                    <input matInput class="form-control form-control-sm" type="number" formControlName="numPieces" required placeholder="Number of Pieces">
+                                    <mat-error> </mat-error>
+                                </div>   
+                                <div class="col-6">
+                                    <mat-label>Weight (kg)</mat-label>
+                                    <input matInput class="form-control form-control-sm" type="number" formControlName="totalWeight" required placeholder="Total Weight (kg)">                                    
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div>    
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-label>Via (1)</mat-label>
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoVia1" formControlName="transit1" placeholder="First Transit Airport (Optional)">
+                                    <mat-autocomplete #autoVia1="matAutocomplete">
+                                        <mat-option *ngFor="let option of filteredTransit1$ | async" [value]="option.iata">
+                                            {{ option.city }} - {{ option.name }} ({{ option.iata }})
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error> </mat-error>
+                                </div>   
+                                <div class="col-6">
+                                    <mat-label>Via (2)</mat-label>
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoVia2" formControlName="transit2" placeholder="Second Transit Airport (Optional)">
+                                    <mat-autocomplete #autoVia2="matAutocomplete">
+                                        <mat-option *ngFor="let option of filteredTransit2$ | async" [value]="option.iata">
+                                            {{ option.city }} - {{ option.name }} ({{ option.iata }})
+                                        </mat-option>
+                                    </mat-autocomplete>
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div>  
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-label>Additional Informations</mat-label>
+                                    <textarea matInput class="form-control form-control-sm" formControlName="additionalInfo" placeholder="Description of Goods or Additional Info"></textarea>
+                                    <mat-error> </mat-error>
+                                </div>   
+                                <div class="col-6">
+                                    <mat-label>Special Instructions</mat-label>
+                                    <textarea matInput class="form-control form-control-sm" formControlName="specialInstructions" placeholder="Any Special Handling Instructions will be appended to Additional Info"></textarea>
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div>    
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-12">
+                                    <mat-label required><b>AWB Suffix No</b></mat-label>
+                                    <input matInput class="form-control form-control-sm" formControlName="awbSuffix" required placeholder="e.g., 12345678">
+                                    <mat-error>Select an Airline to get AWB Prefix then enter Suffix</mat-error>
+                                </div>   
+                            </div>    
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-label>Email</mat-label>
+                                    <input matInput class="form-control form-control-sm" formControlName="email" readonly>
+                                    <mat-error> </mat-error>
+                                </div>   
+                                <div class="col-6">
+                                    <mat-label>Website</mat-label>
+                                    <input matInput class="form-control form-control-sm" formControlName="website" readonly>
+                                    <mat-error> </mat-error>
+                                </div>   
+                            </div> 
+                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                                <div class="col-6">
+                                    <mat-slide-toggle formControlName="includeBarcode">Include Barcode</mat-slide-toggle>
+                                </div>
+                            </div>
+                            <div class="col-12" style="padding-top: 5px; padding-bottom: 5px;">
+                                <button class="btn btn-warning btn-block" style="width: 100%;">Generate Label</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-6">    
+                        <mat-card class="bg-secondary">
+                            <mat-card-content>
+                                <h3>Label Preview</h3>  
+                                <hr>
+                            </mat-card-content>
+                        </mat-card>
+                    </div>
+                </div> 
+            </div>
+        </div>
+    </div>   
+</div>
+<br>
