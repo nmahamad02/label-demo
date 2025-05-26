@@ -109,21 +109,57 @@
                                     <mat-error> </mat-error>
                                 </div>   
                             </div> 
-                            <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                            <!--<div class="row" style="padding-top: 5px; padding-bottom: 5px;">
                                 <div class="col-6">
                                     <mat-slide-toggle formControlName="includeBarcode">Include Barcode</mat-slide-toggle>
                                 </div>
-                            </div>
+                            </div>-->
                             <div class="col-12" style="padding-top: 5px; padding-bottom: 5px;">
-                                <button class="btn btn-warning btn-block" style="width: 100%;">Generate Label</button>
+                                <button class="btn btn-warning btn-block" style="width: 100%;" (click)="showLabelPreview()">Generate Label</button>
                             </div>
                         </form>
                     </div>
-                    <div class="col-6">    
+                    <div class="col-6" *ngIf="showPreview">    
                         <mat-card class="bg-secondary">
                             <mat-card-content>
                                 <h3>Label Preview</h3>  
                                 <hr>
+                                <div class="label-preview">
+                                    <div class="label-box">
+                                        <div class="label-header">Airline</div>
+                                        <div class="label-value">{{ labelForm.value.airline }}</div>
+                                        <div class="label-barcode">
+                                            <svg id="barcode"></svg>
+                                        </div>
+                                        <div class="label-section">
+                                            <strong>Air Waybill No.</strong><br />
+                                            {{ generateAWB() }}
+                                        </div>
+                                        <div class="label-grid">
+                                            <div><strong>Destination</strong><br />{{ labelForm.value.destination }}</div>
+                                            <div><strong>Total No. of Pieces</strong><br />{{ labelForm.value.numPieces }}</div>
+                                        </div>
+                                        <div class="label-grid">
+                                            <div><strong>Weight of Consignment</strong><br />{{ labelForm.value.totalWeight }} K</div>
+                                            <div><strong>Origin</strong><br />{{ labelForm.value.origin }}</div>
+                                        </div>
+                                        <div class="label-grid">
+                                            <div><strong>Via(1)</strong><br />{{ labelForm.value.transit1 }}</div>
+                                            <div><strong>Via(2)</strong><br />{{ labelForm.value.transit2 }}</div>
+                                        </div>
+                                        <div class="label-section">
+                                            <strong>Additional Information</strong><br />
+                                            {{ labelForm.value.additionalInfo }} {{ labelForm.value.specialInstructions }}
+                                        </div>
+                                        <div class="label-section">
+                                            <strong>Piece No.</strong><br />
+                                            1 / {{ labelForm.value.numPieces }}
+                                        </div>
+                                        <div class="label-footer">
+                                            Email: {{ labelForm.value.email }} &nbsp; | &nbsp; Website: {{ labelForm.value.website }}
+                                        </div>
+                                    </div>
+                                </div>
                             </mat-card-content>
                         </mat-card>
                     </div>

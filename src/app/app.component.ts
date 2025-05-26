@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { map, Observable, startWith } from 'rxjs';
 import { DataLoaderService } from './services/data-loader.service';
+import * as JsBarcode from 'jsbarcode';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +23,8 @@ export class AppComponent {
   filteredTransit1$: Observable<any[]>;
   filteredTransit2$: Observable<any[]>;
 
+  showPreview: boolean = false
+
   constructor(private dataLoader: DataLoaderService) {
     this.labelForm = new FormGroup({
       airline: new FormControl('', [ Validators.required]),
@@ -29,14 +32,14 @@ export class AppComponent {
       destination: new FormControl('', [ Validators.required]),
       numPieces: new FormControl('', [ Validators.required]),
       totalWeight: new FormControl('', [ Validators.required]),
-      transit1: new FormControl('', [ Validators.required]),
-      transit2: new FormControl('', [ Validators.required]),
-      additionalInfo: new FormControl('', [ Validators.required]),
-      specialInstructions: new FormControl('', [ Validators.required]),
+      transit1: new FormControl(''),
+      transit2: new FormControl(''),
+      additionalInfo: new FormControl(''),
+      specialInstructions: new FormControl(''),
       awbSuffix: new FormControl('', [ Validators.required]),
-      email: new FormControl('test@test.com', [ Validators.required]),
-      website: new FormControl('www.test.com', [ Validators.required]),
-      includeBarcode: new FormControl('', [ Validators.required]),
+      email: new FormControl('test@test.com'),
+      website: new FormControl('www.test.com'),
+      //includeBarcode: new FormControl('', [ Validators.required]),
     });
     
   }
@@ -73,4 +76,36 @@ export class AppComponent {
       map(value => this._filterAirports(value || ''))
     );
   }
+
+  generateAWB(): string {
+    const prefix = '000';
+    const suffix = this.labelForm.value.awbSuffix || '0000000';
+    return `${prefix}-${suffix}`;
+  }
+
+  showLabelPreview(): void {
+    this.showPreview = true;
+
+    // Wait for Angular to render the preview DOM
+    setTimeout(() => {
+      this.generateBarcode();  // Now the element exists
+    }, 0);
+  }
+
+  generateBarcode(): void {
+    const awb = this.generateAWB();
+    const barcodeElement = document.querySelector("#barcode");
+
+    if (barcodeElement) {
+      JsBarcode(barcodeElement, awb, {
+        format: "CODE128",
+        displayValue: true,
+        fontSize: 14,
+        height: 50
+      });
+    } else {
+      console.warn("Barcode element not found");
+    }
+  }
+
 }
