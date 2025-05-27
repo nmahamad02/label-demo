@@ -13,10 +13,10 @@
                             <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
                                 <div class="col-12">
                                     <mat-label>Airline</mat-label>
-                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoAirline" formControlName="airline" required placeholder="Select Airline">
-                                    <mat-autocomplete #autoAirline="matAutocomplete">
-                                        <mat-option *ngFor="let option of filteredAirlines$ | async" [value]="option.name">
-                                            {{ option.name }} ({{ option.iata }})
+                                    <input type="text" matInput class="form-control form-control-sm" [matAutocomplete]="autoAirline" formControlName="airline" required placeholder="Select Airline" >
+                                    <mat-autocomplete #autoAirline="matAutocomplete" (optionSelected)="getPrefix($event.option.value)">
+                                        <mat-option *ngFor="let option of filteredAirlines$ | async" [value]="option.airline">
+                                            {{ option.airline }} ({{ option.iata }})
                                         </mat-option>
                                     </mat-autocomplete>
                                     <mat-error> </mat-error>
@@ -91,11 +91,15 @@
                                 </div>   
                             </div>    
                             <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
-                                <div class="col-12">
+                                <div class="col-6">
                                     <mat-label required><b>AWB Suffix No</b></mat-label>
                                     <input matInput class="form-control form-control-sm" formControlName="awbSuffix" required placeholder="e.g., 12345678">
-                                    <mat-error>Select an Airline to get AWB Prefix then enter Suffix</mat-error>
+                                </div> 
+                                <div class="col-6">
+                                    <mat-label required><b>HAWB No</b></mat-label>
+                                    <input matInput class="form-control form-control-sm" formControlName="hawb">
                                 </div>   
+                                <mat-error>Select an Airline to get AWB Prefix then enter Suffix</mat-error>
                             </div>    
                             <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
                                 <div class="col-6">
@@ -126,38 +130,79 @@
                                 <hr>
                                 <div class="label-preview">
                                     <div class="label-box">
-                                        <div class="label-header">Airline</div>
-                                        <div class="label-value">{{ labelForm.value.airline }}</div>
-                                        <div class="label-barcode">
-                                            <svg id="barcode"></svg>
-                                        </div>
                                         <div class="label-section">
-                                            <strong>Air Waybill No.</strong><br />
-                                            {{ generateAWB() }}
+                                            Airline<br>
+                                            <strong>{{ labelForm.value.airline }}</strong>
+                                            <div class="label-barcode">
+                                                <svg id="barcode"></svg>
+                                            </div>
+                                            <div class="label-section">
+                                                Air Waybill No.<br />
+                                                <strong>{{ generateAWB() }}</strong>
+                                            </div>
+                                            <div class="label-grid">
+                                                <div>
+                                                    Destination<br />
+                                                    <strong>{{ labelForm.value.destination }}</strong>
+                                                </div>
+                                                <div>
+                                                    Total No. of Pieces<br />
+                                                    <strong>{{ labelForm.value.numPieces }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="label-grid">
+                                                <div>
+                                                    Weight of Consignment<br />
+                                                    <strong>{{ labelForm.value.totalWeight }} K</strong>
+                                                </div>
+                                                <div>
+                                                    Origin<br />
+                                                    <strong>{{ labelForm.value.origin }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="label-grid">
+                                                <div>
+                                                    Via(1)<br />
+                                                    <strong>{{ labelForm.value.transit1 }}</strong>
+                                                </div>
+                                                <div>
+                                                    Via(2)<br />
+                                                    <strong>{{ labelForm.value.transit2 }}</strong>
+                                                </div>                                        
+                                            </div>
+                                            <div class="label-section">
+                                                Additional Information<br />
+                                                <strong>{{ labelForm.value.additionalInfo }} {{ labelForm.value.specialInstructions }}</strong>
+                                            </div>
+                                            <div class="label-section">
+                                                Piece No.<br />
+                                                <strong> 1 / {{ labelForm.value.numPieces }}</strong>
+                                            </div>
+                                            <div class="label-section">
+                                                <strong>HAWB No.</strong><br />
+                                                <strong>{{ labelForm.value.hawb }}</strong>
+                                                <div class="label-barcode">
+                                                    <svg id="hawbBarcode"></svg>
+                                                </div>
+                                            </div>
+                                            <div class="label-footer">
+                                                Email: {{ labelForm.value.email }} &nbsp; | &nbsp; Website: {{ labelForm.value.website }}
+                                            </div>
                                         </div>
-                                        <div class="label-grid">
-                                            <div><strong>Destination</strong><br />{{ labelForm.value.destination }}</div>
-                                            <div><strong>Total No. of Pieces</strong><br />{{ labelForm.value.numPieces }}</div>
-                                        </div>
-                                        <div class="label-grid">
-                                            <div><strong>Weight of Consignment</strong><br />{{ labelForm.value.totalWeight }} K</div>
-                                            <div><strong>Origin</strong><br />{{ labelForm.value.origin }}</div>
-                                        </div>
-                                        <div class="label-grid">
-                                            <div><strong>Via(1)</strong><br />{{ labelForm.value.transit1 }}</div>
-                                            <div><strong>Via(2)</strong><br />{{ labelForm.value.transit2 }}</div>
-                                        </div>
-                                        <div class="label-section">
-                                            <strong>Additional Information</strong><br />
-                                            {{ labelForm.value.additionalInfo }} {{ labelForm.value.specialInstructions }}
-                                        </div>
-                                        <div class="label-section">
-                                            <strong>Piece No.</strong><br />
-                                            1 / {{ labelForm.value.numPieces }}
-                                        </div>
-                                        <div class="label-footer">
-                                            Email: {{ labelForm.value.email }} &nbsp; | &nbsp; Website: {{ labelForm.value.website }}
-                                        </div>
+                                    </div>
+                                </div> 
+                                <div class="col-12" style="padding-top: 5px; padding-bottom: 5px;">
+                                    <button class="btn btn-info btn-block" style="width: 100%;"(click)="printLabel()" >Print Label</button>
+                                </div>
+                                <div class="row" *ngIf="zplGenerated">
+                                    <div class="col-4">
+                                        <button class="btn btn-success btn-block" style="width: 100%;" (click)="downloadZPL()">Download ZPL File</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-primary btn-block" style="width: 100%;" (click)="sendToPrinter()">Send to IP Printer</button>
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-secondary btn-block" style="width: 100%;" (click)="printZPL()">Print Label</button>
                                     </div>
                                 </div>
                             </mat-card-content>

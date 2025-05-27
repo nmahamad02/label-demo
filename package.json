@@ -34,6 +34,7 @@
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",
+    "zebra-browser-print-wrapper-https": "^0.1.6",
     "zone.js": "~0.12.0"
   },
   "devDependencies": {
