@@ -186,8 +186,7 @@ getPrefix(selectedAirlineName: string): void {
     window.URL.revokeObjectURL(url);
   }
 
-
-  generatePDF() {
+ /* generatePDF() {
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -319,7 +318,131 @@ getPrefix(selectedAirlineName: string): void {
       const x = (pageWidth - textWidth) / 2;
       doc.text(text, x, y);
     }
+  }*/
+
+  async generatePDF() {
+    const f = this.labelForm.value;
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: [101.6, 127] // 4x5 inch
+    });
+
+    const awb = this.generateAWB(); // keep one consistent AWB per PDF
+    const awbBarcode = this.generateBarcodeBase64(awb);
+    const hawbBarcode = this.generateBarcodeBase64(f.hawb);
+
+    // Helper to convert base64 to Image and wait for load
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = src;
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+      });
+    };
+
+    try {
+      const [awbImg, hawbImg] = await Promise.all([loadImage(awbBarcode), loadImage(hawbBarcode)]);
+
+      for (let i = 1; i <= f.numPieces; i++) {
+        if (i > 1) doc.addPage();
+
+        doc.roundedRect(2.5, 2.5, 97, 122, 0, 0);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(0, 0, 0);
+
+        centerText(doc, 'Airline', 6, 8); 
+        doc.setFont('Helvetica', 'bold');
+        centerText(doc, f.airline, 10, 10);
+        doc.setFont('Helvetica', 'normal');
+
+        // Barcode section
+        doc.roundedRect(2.5, 12.5, 97, 21.5, 0, 0);
+        const scale1 = 20 / awbImg.height;
+        const scaledWidth1 = awbImg.width * scale1;
+        const centerX1 = (doc.internal.pageSize.getWidth() - scaledWidth1) / 2;
+        doc.addImage(awbImg, 'PNG', centerX1, 13, scaledWidth1, 20);
+
+        centerText(doc, 'Air Waybill No.', 38, 8);
+        doc.setFont('Helvetica', 'bold');
+        centerText(doc, awb, 42, 10);
+        doc.setFont('Helvetica', 'normal');
+
+        // Data grid
+        const startX = 2.5;
+        const startY = 45;
+        const cellWidth = 48.5;
+        const cellHeight = 10;
+        const dataGrid = [
+          ['Destination', f.destination],
+          ['Total No. of Pieces', String(f.numPieces)],
+          ['Weight of Consignment', `${f.totalWeight}K`],
+          ['Origin', f.origin],
+          ['Via(1)', f.transit1],
+          ['Via(2)', f.transit2]
+        ];
+
+        for (let j = 0; j < dataGrid.length; j++) {
+          const col = j % 2;
+          const row = Math.floor(j / 2);
+          const x = startX + col * (cellWidth);
+          const y = startY + row * cellHeight;
+
+          doc.rect(x, y, cellWidth, cellHeight);
+          doc.setFontSize(8);
+          centerText(doc, dataGrid[j][0], y + 4, 8, x, cellWidth);
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          centerText(doc, dataGrid[j][1], y + 8, 10, x, cellWidth);
+          doc.setFont('helvetica', 'normal');
+        }
+
+        // Additional Info
+        doc.roundedRect(2.5, 75, 97, 10, 0, 0);
+        centerText(doc, 'Additional Information', 79, 8);
+        doc.setFont('Helvetica', 'bold');
+        centerText(doc, `${f.additionalInfo} ${f.specialInstructions}`, 83, 10);
+
+        // Piece number
+        doc.roundedRect(2.5, 85, 97, 10, 0, 0);
+        doc.setFont('Helvetica', 'normal');
+        centerText(doc, 'Piece No.', 89, 8);
+        doc.setFont('Helvetica', 'bold');
+        centerText(doc, `${i}/${f.numPieces}`, 93, 10);
+
+        // HAWB
+        doc.roundedRect(2.5, 95, 97, 23, 0, 0);
+        doc.setFont('Helvetica', 'bold');
+        centerText(doc, `HAWB No. ${f.hawb}`, 99, 10);
+
+        const scale2 = 17.5 / hawbImg.height;
+        const scaledWidth2 = hawbImg.width * scale2;
+        const centerX2 = (doc.internal.pageSize.getWidth() - scaledWidth2) / 2;
+        doc.addImage(hawbImg, 'PNG', centerX2, 100, scaledWidth2, 17.5);
+
+        // Footer
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(128, 128, 128);
+        centerText(doc, `Email: ${f.email} | Website: ${f.website}`, 122.5, 8);
+      }
+
+      doc.save(`label_${awb}.pdf`);
+    } catch (err) {
+      console.error('Image loading failed:', err);
+    }
+
+    //  Updated centerText helper to optionally align inside boxes
+    function centerText(doc: jsPDF, text: string, y: number, fontSize: number, xStart?: number, boxWidth?: number) {
+      doc.setFontSize(fontSize);
+      const textWidth = doc.getTextWidth(text);
+      const x = xStart != null && boxWidth != null
+        ? xStart + (boxWidth - textWidth) / 2
+        : (doc.internal.pageSize.getWidth() - textWidth) / 2;
+      doc.text(text, x, y);
+    }
   }
+
 
   generateBarcodeBase64(data: string): string {
     const canvas = document.createElement('canvas');
@@ -384,26 +507,28 @@ getPrefix(selectedAirlineName: string): void {
   }
 
   clearForm() {
-    this.labelForm = new FormGroup({
-      airline: new FormControl('', [ Validators.required]),
-      origin: new FormControl('', [ Validators.required]),
-      destination: new FormControl('', [ Validators.required]),
-      numPieces: new FormControl('', [ Validators.required]),
-      totalWeight: new FormControl('', [ Validators.required]),
-      transit1: new FormControl(''),
-      transit2: new FormControl(''),
-      additionalInfo: new FormControl(''),
-      specialInstructions: new FormControl(''),
-      awbPrefix: new FormControl(''),
-      awbSuffix: new FormControl('', [ Validators.required]),
-      hawb: new FormControl(''),
-      email: new FormControl('test@test.com'),
-      website: new FormControl('www.test.com'),
-      //includeBarcode: new FormControl('', [ Validators.required]),
+    this.labelForm.reset({
+      airline: '',
+      origin: '',
+      destination: '',
+      numPieces: '',
+      totalWeight: '',
+      transit1: '',
+      transit2: '',
+      additionalInfo: '',
+      specialInstructions: '',
+      awbPrefix: '',
+      awbSuffix: '',
+      hawb: '',
+      email: 'test@test.com',
+      website: 'www.test.com'
+      // includeBarcode: ''
     });
-    this.showPreview = false
+
+    this.showPreview = false;
     this.zplGenerated = false;
     this.zplData = '';
   }
+
 
 }
