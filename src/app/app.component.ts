@@ -84,12 +84,13 @@ export class AppComponent {
     );
   }
 
+
 getPrefix(selectedAirlineName: string): void {
   const selectedAirline = this.airlines.find(a => a.airline === selectedAirlineName);
   if (selectedAirline && selectedAirline.awb) {
-    this.labelForm.patchValue({ awbPrefix: selectedAirline.awb });
+    const paddedPrefix = selectedAirline.awb.toString().padStart(3, '0');
+    this.labelForm.patchValue({ awbPrefix: paddedPrefix });
   } else {
-    // Optional: clear the prefix if not found
     this.labelForm.patchValue({ awbPrefix: '' });
   }
 }
@@ -102,6 +103,8 @@ getPrefix(selectedAirlineName: string): void {
   showLabelPreview(): void {
     this.showPreview = true;
 
+    const data = this.labelForm.value
+    console.log(data)
     // Wait for Angular to render the preview DOM
     setTimeout(() => {
       this.generateBarcode();  // Now the element exists
@@ -117,12 +120,14 @@ getPrefix(selectedAirlineName: string): void {
         height: 50
       });
   
-      JsBarcode("#hawbBarcode", this.labelForm.value.hawb, {
-        format: "CODE128",
-        displayValue: true,
-        fontSize: 14,
-        height: 50
-      });
+      if(this.labelForm.value.hawb != '') {
+        JsBarcode("#hawbBarcode", this.labelForm.value.hawb, {
+          format: "CODE128",
+          displayValue: true,
+          fontSize: 14,
+          height: 50
+        });
+      }
     }, 0);
   }
 
@@ -131,7 +136,6 @@ getPrefix(selectedAirlineName: string): void {
     this.zplGenerated = true;
     console.log(this.zplData); // Optional
   }
-
 
   generateZPL(): string {
     const awb = this.generateAWB();
@@ -186,142 +190,9 @@ getPrefix(selectedAirlineName: string): void {
     window.URL.revokeObjectURL(url);
   }
 
- /* generatePDF() {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: [101.6, 127] // 4x5 inch label
-    });
-    const f = this.labelForm.value;
-    doc.roundedRect(2.5, 2.5, 97, 122,0, 0);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    centerText(doc, 'Airline', 6, 8);
-    doc.setFont('Helvetica', 'bold');
-    centerText(doc, f.airline, 10, 10);
-    doc.setFont('Helvetica', 'normal');
-    doc.roundedRect(2.5, 12.5, 97, 21.5,0, 0);
-    const awbBarcode = this.generateBarcodeBase64(this.generateAWB());
-
-    // Create an Image object to load the base64 data
-    const img1 = new Image();
-    img1.src = awbBarcode;
-
-    img1.onload = () => {
-      const originalWidth1 = img1.width;
-      const originalHeight1 = img1.height;
-
-      const maxHeight1 = 20;
-      const scale1 = maxHeight1 / originalHeight1;
-      const scaledWidth1 = originalWidth1 * scale1;
-
-      const pageWidth1 = doc.internal.pageSize.getWidth();
-      const centerX1 = (pageWidth1 - scaledWidth1) / 2;
-      const y1 = 13;  // Fixed Y or calculated position
-
-      doc.addImage(awbBarcode, 'PNG', centerX1, y1, scaledWidth1, maxHeight1);
-
-      centerText(doc, 'Air Waybill No.', 38, 8);
-      doc.setFont('Helvetica', 'bold');
-      centerText(doc, this.generateAWB(), 42, 10);
-      doc.setFont('Helvetica', 'normal');
-      const startX = 2.5;
-      const startY = 45;
-      const cellWidth = 48.5;
-      const cellHeight = 10;
-      const rowGap = 0;
-      const colGap = 0;
-      // Your data grid: array of [label, value]
-      const dataGrid = [
-        ['Destination', f.destination],
-        ['Total No. of Pieces', String(f.numPieces)],
-        ['Weight of Consignment', `${f.totalWeight}K`],
-        ['Origin', f.origin],
-        ['Via(1)', f.transit1],
-        ['Via(2)', f.transit2]
-      ];
-      for (let i = 0; i < dataGrid.length; i++) {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const x = startX + col * (cellWidth + colGap);
-        const y = startY + row * (cellHeight + rowGap);
-
-        // Optional: draw border
-        doc.rect(x, y, cellWidth, cellHeight);
-        const label = dataGrid[i][0];
-        const value = dataGrid[i][1];
-
-        // LABEL
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        const labelWidth = doc.getTextWidth(label);
-        const labelX = x + (cellWidth - labelWidth) / 2;
-        doc.text(label, labelX, y + 4);  // small vertical shift for aesthetics
-
-        // VALUE
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        const valueWidth = doc.getTextWidth(value);
-        const valueX = x + (cellWidth - valueWidth) / 2;
-        doc.text(value, valueX, y + 8);
-
-        // Reset font for next loop
-        doc.setFont('helvetica', 'normal');
-      }
-
-      doc.roundedRect(2.5, 75, 97, 10,0, 0);
-      doc.setFont('Helvetica', 'normal');
-      centerText(doc, 'Additional Information', 79, 8);
-      doc.setFont('Helvetica', 'bold');
-      centerText(doc, `${f.additionalInfo} ${f.specialInstructions}`, 83, 10);
-
-      doc.roundedRect(2.5, 85, 97, 10,0, 0);
-      doc.setFont('Helvetica', 'normal');
-      centerText(doc, 'Piece No.', 89, 8);
-      doc.setFont('Helvetica', 'bold');
-      centerText(doc, `1/${f.numPieces}`, 93, 10);
-    
-      doc.roundedRect(2.5, 95, 97, 23,0, 0);
-      doc.setFont('Helvetica', 'bold');
-      centerText(doc, `HAWB No. ${f.hawb}`, 99, 10);
-
-      const hawbBarcode = this.generateBarcodeBase64(f.hawb);
-      // Create an Image object to load the base64 data
-      const img2 = new Image();
-      img2.src = hawbBarcode;
-
-      img2.onload = () => {
-        const originalWidth2 = img2.width;
-        const originalHeight2 = img2.height;
-
-        const maxHeight2 = 17.5;
-        const scale2 = maxHeight2 / originalHeight2;
-        const scaledWidth2 = originalWidth2 * scale2;
-
-        const pageWidth2 = doc.internal.pageSize.getWidth();
-        const centerX2 = (pageWidth2 - scaledWidth2) / 2;
-        const y2 = 100;  // Fixed Y or calculated position
-
-        doc.addImage(hawbBarcode, 'PNG', centerX2, y2, scaledWidth2, maxHeight2);
-
-        doc.setFont('Helvetica', 'normal');
-        doc.setTextColor(128, 128, 128);
-        centerText(doc, `Email: ${f.email} | Website: ${f.website}`, 122.5, 8);
-
-        doc.save(`label_${this.generateAWB()}.pdf`);
-      };
-    };
-    function centerText(doc: jsPDF, text: string, y: number, fontSize: number) {
-      doc.setFontSize(fontSize);
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const textWidth = doc.getTextWidth(text);
-      const x = (pageWidth - textWidth) / 2;
-      doc.text(text, x, y);
-    }
-  }*/
-
   async generatePDF() {
     const f = this.labelForm.value;
+    console.log(f)
     const doc = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -330,7 +201,7 @@ getPrefix(selectedAirlineName: string): void {
 
     const awb = this.generateAWB(); // keep one consistent AWB per PDF
     const awbBarcode = this.generateBarcodeBase64(awb);
-    const hawbBarcode = this.generateBarcodeBase64(f.hawb);
+    const hawbBarcode = this.generateBarcodeBase64(f.hawb || '0000');
 
     // Helper to convert base64 to Image and wait for load
     const loadImage = (src: string): Promise<HTMLImageElement> => {
@@ -416,11 +287,13 @@ getPrefix(selectedAirlineName: string): void {
         doc.setFont('Helvetica', 'bold');
         centerText(doc, `HAWB No. ${f.hawb}`, 99, 10);
 
-        const scale2 = 17.5 / hawbImg.height;
-        const scaledWidth2 = hawbImg.width * scale2;
-        const centerX2 = (doc.internal.pageSize.getWidth() - scaledWidth2) / 2;
-        doc.addImage(hawbImg, 'PNG', centerX2, 100, scaledWidth2, 17.5);
-
+        if(f.hawb != '') {
+          const scale2 = 17.5 / hawbImg.height;
+          const scaledWidth2 = hawbImg.width * scale2;
+          const centerX2 = (doc.internal.pageSize.getWidth() - scaledWidth2) / 2;
+          doc.addImage(hawbImg, 'PNG', centerX2, 100, scaledWidth2, 17.5);
+        } 
+        
         // Footer
         doc.setFont('Helvetica', 'normal');
         doc.setTextColor(128, 128, 128);
@@ -445,10 +318,12 @@ getPrefix(selectedAirlineName: string): void {
 
 
   generateBarcodeBase64(data: string): string {
+    const value = data && data.trim() !== '' ? data : '0000'; // default safe value
     const canvas = document.createElement('canvas');
-    JsBarcode(canvas, data, { format: "CODE128" });
+    JsBarcode(canvas, value, { format: "CODE128" });
     return canvas.toDataURL("image/png");
   }
+
 
   sendToPrinter() {
     let savedIP = localStorage.getItem('printerIP');
@@ -477,15 +352,6 @@ getPrefix(selectedAirlineName: string): void {
     .then(() => alert('ZPL sent to printer!'))
     .catch(err => console.error('Error printing:', err));
   }
-
-
-  /*copyZPL() {
-    navigator.clipboard.writeText(this.zplData).then(() => {
-      alert('ZPL copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy:', err);
-    });
-  }*/
 
   async printZPL(){
     try {
