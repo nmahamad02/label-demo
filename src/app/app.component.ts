@@ -295,9 +295,15 @@ getPrefix(selectedAirlineName: string): void {
         } 
         
         // Footer
-        doc.setFont('Helvetica', 'normal');
-        doc.setTextColor(128, 128, 128);
-        centerText(doc, `Email: ${f.email} | Website: ${f.website}`, 122.5, 8);
+        // Footer background
+doc.setFillColor(0, 0, 0);       // black
+doc.rect(2.5, 118, 97, 7, 'F'); // filled rectangle (adjust height/pos as needed)
+
+// Footer text
+doc.setFont('Helvetica', 'bold');
+doc.setTextColor(255, 255, 255); // white
+centerText(doc, `Email: ${f.email} | Website: ${f.website}`, 122.5, 8);
+
       }
 
       doc.save(`label_${awb}.pdf`);
